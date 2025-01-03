@@ -1,0 +1,52 @@
+{
+    "name": "Agendamento de salas de reunião SDO",
+    "short_name": "Reunião SDO",
+    "description": "Sistema para agendamento de salas de reunião",
+    "start_url": "/",
+    "id": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#002855",
+    "icons": [
+      {
+        "src": "/static/icons/logo_sdo_72x72.png",
+        "sizes": "72x72",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/icons/logo_sdo_96x96.png",
+        "sizes": "96x96",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/icons/logo_sdo_128x128.png",
+        "sizes": "128x128",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/icons/logo_sdo_144x144.png",
+        "sizes": "144x144",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/icons/logo_sdo_152x152.png",
+        "sizes": "152x152",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/icons/logo_sdo_192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/icons/logo_sdo_384x384.png",
+        "sizes": "384x384",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/icons/logo_sdo_512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }

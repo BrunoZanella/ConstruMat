@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Recibo - Pedido #{{ recibo.pedido.id }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">Recibo de Entrega - Pedido #{{ recibo.pedido.id }}</h4>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5>Informações da Entrega</h5>
+                <p><strong>Data:</strong> {{ recibo.data_entrega|date:"d/m/Y H:i" }}</p>
+                <p><strong>Cliente:</strong> {{ recibo.pedido.cliente.get_full_name }}</p>
+                <p><strong>Endereço:</strong> {{ recibo.pedido.endereco_entrega }}</p>
+            </div>
+            <div class="col-md-6">
+                <h5>Informações do Motorista</h5>
+                <p><strong>Nome:</strong> {{ recibo.pedido.motorista.usuario.get_full_name }}</p>
+                <p><strong>Veículo:</strong> {{ recibo.pedido.motorista.get_tipo_veiculo_display }}</p>
+                <p><strong>Placa:</strong> {{ recibo.pedido.motorista.placa }}</p>
+            </div>
+        </div>
+
+        <h5>Itens Entregues</h5>
+        <div class="table-responsive mb-4">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantidade</th>
+                        <th>Preço Unit.</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recibo.itens %}
+                    <tr>
+                        <td>{{ item.produto.nome }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>R$ {{ item.preco_unitario }}</td>
+                        <td>R$ {{ item.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                        <td>R$ {{ recibo.total }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Frete:</strong></td>
+                        <td>R$ {{ recibo.frete }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                        <td><strong>R$ {{ recibo.total_com_frete }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print"></i> Imprimir Recibo
+            </button>
+            <a href="{% url 'pedidos_motorista' %}" class="btn btn-secondary">
+                Voltar para Pedidos
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn { display: none; }
+    .card { border: none; }
+    .card-header { background: none; }
+}
+</style>
+{% endblock %}

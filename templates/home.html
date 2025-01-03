@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}ConstruMat - Início{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Lojas de Material de Construção</h1>
+    </div>
+    
+    {% for empresa in empresas %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <a href="{% url 'empresa_detalhes' empresa.id %}" class="text-decoration-none">
+            <div class="card h-100 hover-shadow">
+                {% if empresa.foto %}
+                <img src="{{ empresa.foto.url }}" class="card-img-top" alt="{{ empresa.nome_fantasia }}" 
+                     style="height: 300px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title text-dark">{{ empresa.nome_fantasia }}</h5>
+                    <p class="card-text text-muted">
+                        <i class="fas fa-tag"></i> {{ empresa.tipo.nome }}
+                    </p>
+                    <p class="card-text text-dark">
+                        <i class="fas fa-clock"></i> {{ empresa.hora_abertura|time:"H:i" }} - {{ empresa.hora_fechamento|time:"H:i" }}
+                    </p>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p class="text-center">Nenhuma empresa cadastrada ainda.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}

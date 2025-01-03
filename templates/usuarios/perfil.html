@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}ConstruMat - Meu Perfil{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Informações do Perfil -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Meu Perfil</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if user.foto %}
+                    <img src="{{ user.foto.url }}" alt="Foto de perfil" class="rounded-circle img-thumbnail" 
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" 
+                         style="width: 150px; height: 150px;">
+                        <i class="fas fa-user fa-4x text-white"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="alert alert-danger mt-1">
+                            {{ field.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Atualizar Perfil</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if user.tipo == 'MOT' %}
+        <!-- Seção do Motorista -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informações do Motorista</h5>
+            </div>
+            <div class="card-body">
+                {% if user.motorista %}
+                <dl class="row mb-3">
+                    <dt class="col-sm-4">CNH:</dt>
+                    <dd class="col-sm-8">{{ user.motorista.cnh }}</dd>
+                    
+                    <dt class="col-sm-4">Veículo:</dt>
+                    <dd class="col-sm-8">{{ user.motorista.get_tipo_veiculo_display }}</dd>
+                    
+                    <dt class="col-sm-4">Placa:</dt>
+                    <dd class="col-sm-8">{{ user.motorista.placa }}</dd>
+                    
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge {% if user.motorista.disponivel %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ user.motorista.disponivel|yesno:"Disponível,Indisponível" }}
+                        </span>
+                    </dd>
+                </dl>
+                <div class="d-grid">
+                    <a href="{% url 'editar_motorista' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar Informações
+                    </a>
+                </div>
+                {% else %}
+                <p class="mb-0">
+                    <a href="{% url 'cadastro_motorista' %}" class="btn btn-primary">Cadastrar como Motorista</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.tipo == 'EMP' %}
+        <!-- Seção da Empresa -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informações da Empresa</h5>
+            </div>
+            <div class="card-body">
+                {% if user.empresa %}
+                <dl class="row mb-3">
+                    <dt class="col-sm-4">Nome:</dt>
+                    <dd class="col-sm-8">{{ user.empresa.nome_fantasia }}</dd>
+                    
+                    <dt class="col-sm-4">CNPJ:</dt>
+                    <dd class="col-sm-8">{{ user.empresa.cnpj }}</dd>
+                    
+                    <dt class="col-sm-4">Tipo:</dt>
+                    <dd class="col-sm-8">{{ user.empresa.tipo.nome }}</dd>
+                    
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge {% if user.empresa.ativo %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ user.empresa.ativo|yesno:"Ativo,Inativo" }}
+                        </span>
+                    </dd>
+                </dl>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'editar_empresa' user.empresa.id %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar Empresa
+                    </a>
+                    <a href="{% url 'gerenciar_produtos' user.empresa.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-box"></i> Gerenciar Produtos
+                    </a>
+                </div>
+                {% else %}
+                <p class="mb-0">
+                    <a href="{% url 'cadastro_empresa' %}" class="btn btn-primary">Cadastrar Empresa</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Conversas -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Minhas Conversas</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for conversa in conversas %}
+                    <a href="{% url 'chat_pedido' conversa.pedido.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Pedido #{{ conversa.pedido.id }} - {{ conversa.pedido.empresa.nome_fantasia }}</h6>
+                                <small class="text-muted">
+                                    Última mensagem: {{ conversa.ultima_mensagem.enviada_em|date:"d/m/Y H:i" }}
+                                </small>
+                            </div>
+                            {% if conversa.mensagens_nao_lidas %}
+                            <span class="badge bg-primary rounded-pill">{{ conversa.mensagens_nao_lidas }}</span>
+                            {% endif %}
+                        </div>
+                        <p class="mb-1 text-truncate">{{ conversa.ultima_mensagem.conteudo }}</p>
+                    </a>
+                    {% empty %}
+                    <div class="text-center p-4">
+                        <p class="mb-0 text-muted">Nenhuma conversa encontrada.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

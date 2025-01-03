@@ -1,0 +1,82 @@
+nomes:
+Construfácil 
+Construlog 
+ObraJá 
+EntregaCerta 
+LogiObra 
+BuilderGo 
+
+
+preciso dos templates de empresas, de produtos e de motoristas (veja quais templates esta faltando e me entregue junto com as urls e views deles). 
+quero que se a empresa estiver fechada, mostre que esta fechada mas que ainda pode clicar nela para ver os produtos. 
+quando a empresa cadastrar sua empresa no perfil, consiga ver ela e editar essa empresa e consiga adicionar produtos.
+quando o motorista se cadastrar como motorista, ele consiga depois de cadastrado, editar esse cadastro. quero que quando o motorista logar no sistema, ele fique disponivel, sabendo que tem motoristas ativos na plataforma
+
+
+
+
+
+
+
+
+quero que enquanto o motorista nao aceitou, ainda possa cancelar o pedido.
+quero que quando o motorista aceitar a corrida, nao pode aceitar outra enquanto nao concluir a que esta, quero que quando ele aceitar, mostre detalhes da corrida para ele, onde e, que entre na corrida mesmo , 
+com o botao de quando receber a encomenda e um botao de quando acabar para que conclua o pedido. quero que mostre para o usuario tambem a corrida. depois de finalizar, 
+em home para o usuario volte a mostrar as empresas, para o motorista mostre se tem corridas para aceitar e para a empresa mostre os pedidos que fizeram para essa empresa
+
+
+
+1. Cancelamento do Pedido pelo Cliente (Usuário)
+Enquanto o motorista não aceitar o pedido, o cliente (usuário) pode cancelar o pedido.
+2. Aceitação do Pedido pelo Motorista
+Quando o motorista aceitar a corrida:
+Ele não poderá aceitar outro pedido enquanto não concluir o que está em andamento.
+Após aceitar a corrida, o motorista verá os detalhes da corrida, como o local de retirada, destino, e outras informações relevantes.
+3. Controle de Status da Corrida para o Motorista
+O motorista terá dois botões principais para atualizar o status da corrida:
+"Receber Encomenda" – quando o motorista pegar a encomenda.
+"Concluir Corrida" – quando ele terminar a entrega, finalizando o pedido.
+4. Exibição de Detalhes para o Cliente e Motorista
+O cliente verá os detalhes da corrida, como o motorista designado e o status da entrega (em andamento, recebendo encomenda, concluída, etc.).
+O motorista terá acesso à mesma informação sobre a corrida, incluindo o local e os detalhes da entrega.
+5. Atualização de Informações na Página Inicial (Home)
+Após a conclusão da corrida:
+Para o cliente (usuário), a página Home voltará a exibir as empresas disponíveis para novas interações.
+Para o motorista, a Home exibirá se ele tem corridas disponíveis para aceitar.
+Para a empresa, a Home mostrará os pedidos realizados para a empresa, possibilitando um controle mais claro sobre os pedidos recebidos.
+6. Alteração de Tipo de Usuário no Perfil
+Funcionalidade de Mudança de Tipo de Usuário:
+
+O usuário poderá mudar seu tipo de usuário a qualquer momento, podendo se tornar:
+Cliente
+Motorista
+Empresa
+A alteração poderá ser feita diretamente no perfil do usuário, em uma seção dedicada à troca de tipo de usuário.
+Preservação de Dados:
+
+Ao mudar de motorista para cliente, cliente para empresa, ou vice-versa:
+Os dados da empresa (se o usuário for uma empresa) e os dados do veículo (se o usuário for um motorista) não serão apagados automaticamente.
+Caso o usuário queira apagar essas informações, ele poderá editar manualmente essas seções de seu perfil e excluir os dados relacionados.
+Exemplo:
+Se um motorista decidir se tornar cliente, o sistema preserva as informações do veículo até que o motorista decida apagá-las.
+Se um cliente deseja se tornar uma empresa, os dados da empresa serão mantidos, mas o usuário terá a opção de editá-los ou excluí-los se desejar.
+Resumo das Funcionalidades
+Cliente:
+
+Pode cancelar o pedido até que o motorista aceite.
+Vê os detalhes da corrida quando o motorista aceita o pedido.
+Motorista:
+
+Só pode aceitar uma corrida de cada vez.
+Vê os detalhes da corrida e tem botões para atualizar o status (Receber Encomenda e Concluir Corrida).
+Empresa:
+
+Vê os pedidos feitos para ela pelos clientes.
+Pós-conclusão da Corrida:
+
+Cliente: Página inicial volta a mostrar empresas.
+Motorista: Página inicial exibe corridas disponíveis.
+Empresa: Página inicial exibe pedidos realizados.
+Alteração de Tipo de Usuário:
+
+O usuário pode mudar seu tipo (Cliente, Motorista, ou Empresa) a qualquer momento, preservando os dados (como veículo ou empresa) até que o usuário decida editar ou excluir essas informações manualmente.

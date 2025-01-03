@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos Disponíveis - ConstruMat{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Pedidos Disponíveis</h2>
+
+<div class="row">
+    {% for pedido in pedidos %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Pedido #{{ pedido.id }}</h5>
+                    <span class="badge bg-{{ pedido.get_status_class }}">{{ pedido.get_status_display }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p><strong>Empresa:</strong> {{ pedido.empresa.nome_fantasia }}</p>
+                <p><strong>Endereço de Entrega:</strong> {{ pedido.endereco_entrega }}</p>
+                <p><strong>Data do Pedido:</strong> {{ pedido.data_pedido|date:"d/m/Y H:i" }}</p>
+                
+                <h6>Itens:</h6>
+                <ul class="list-unstyled">
+                    {% for item in pedido.itempedido_set.all %}
+                    <li>{{ item.quantidade }}x {{ item.produto.nome }}</li>
+                    {% endfor %}
+                </ul>
+
+                <form method="post" action="{% url 'aceitar_pedido' pedido.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Aceitar Pedido
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            Nenhum pedido disponível no momento.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

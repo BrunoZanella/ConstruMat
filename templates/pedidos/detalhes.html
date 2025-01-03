@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedido #{{ pedido.id }} - ConstruMat{% endblock %}
+
+{% block content %}
+
+<style>
+
+    /* Cores para os status */
+    .badge.pendente {
+        background-color: orange;
+        animation: pulsar 1.5s infinite;
+    }
+    
+    .badge.aceito,
+    .badge.preparacao,
+    .badge.saiu {
+        background-color: green;
+        color: white;
+    }
+    
+    .badge.entregue {
+        background-color: blue;
+        color: white;
+    }
+    
+    .badge.cancelado {
+        background-color: red;
+        color: white;
+    }
+    
+    /* Animação de pulsar */
+    @keyframes pulsar {
+        0% {
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(255, 165, 0, 1);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+    }
+    
+</style>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Pedido #{{ pedido.id }}</h4>
+            {% comment %} <span class="badge text-dark border border-dark-{{ pedido.get_status_class }}">{{ pedido.get_status_display }}</span> {% endcomment %}
+            <span class="badge {{ pedido.get_status_class }}">
+                {{ pedido.get_status_display }}
+            </span>  
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5>Informações do Pedido</h5>
+                <p><strong>Data:</strong> {{ pedido.data_pedido|date:"d/m/Y H:i" }}</p>
+                <p><strong>Empresa:</strong> {{ pedido.empresa.nome_fantasia }}</p>
+                <p><strong>Status:</strong> {{ pedido.get_status_display }}</p>
+                <p><strong>Endereço de Entrega:</strong> {{ pedido.endereco_entrega }}</p>
+                {% if pedido.observacao %}
+                <p><strong>Observações:</strong> {{ pedido.observacao }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h5>Informações de Entrega</h5>
+                {% if pedido.motorista %}
+                <p><strong>Motorista:</strong> {{ pedido.motorista.usuario.get_full_name }}</p>
+                <p><strong>Veículo:</strong> {{ pedido.motorista.get_tipo_veiculo_display }}</p>
+                <p><strong>Placa:</strong> {{ pedido.motorista.placa }}</p>
+                {% else %}
+                <p>Aguardando motorista aceitar o pedido...</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <h5>Itens do Pedido</h5>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Preço Unitário</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedido.itempedido_set.all %}
+                    <tr>
+                        <td>{{ item.produto.nome }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>R$ {{ item.preco_unitario }}</td>
+                        <td>R$ {{ item.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                        <td><strong>R$ {{ pedido.total }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'chat_pedido' pedido.id %}" class="btn btn-primary">
+                <i class="fas fa-comments"></i> Chat
+            </a>
+            {% if pedido.status == 'ENT' and not pedido.avaliacao %}
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#avaliacaoModal">
+                <i class="fas fa-star"></i> Avaliar Pedido
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if pedido.status == 'ENT' and not pedido.avaliacao %}
+<!-- Modal de Avaliação -->
+<div class="modal fade" id="avaliacaoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'avaliar_pedido' pedido.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Avaliar Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nota</label>
+                        <div class="rating" id="rating">
+                            {% for i in "12345" %}
+                            <span class="star" data-value="{{ i }}"><i class="fas fa-star"></i></span>
+                            {% endfor %}
+                            <input type="hidden" name="nota" id="ratingInput">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comentário</label>
+                        <textarea name="comentario" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Avaliação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.rating {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+}
+
+.star {
+    font-size: 2rem;
+    color: #ccc; /* Cor padrão da estrela */
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.star.selected,
+.star:hover,
+.star:hover ~ .star {
+    color: #f0d64f; /* Cor dourada */
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const stars = document.querySelectorAll(".rating .star");
+    const ratingInput = document.getElementById("ratingInput");
+
+    stars.forEach((star) => {
+        star.addEventListener("click", () => {
+            // Remove seleção anterior
+            stars.forEach(s => s.classList.remove("selected"));
+
+            // Adiciona seleção até a estrela clicada
+            star.classList.add("selected");
+            let current = star.previousElementSibling;
+            while (current) {
+                current.classList.add("selected");
+                current = current.previousElementSibling;
+            }
+
+            // Atualiza o valor do input escondido
+            ratingInput.value = star.dataset.value;
+        });
+
+        star.addEventListener("mouseover", () => {
+            // Destaca estrelas ao passar o mouse
+            stars.forEach(s => s.classList.remove("hovered"));
+            star.classList.add("hovered");
+            let current = star.previousElementSibling;
+            while (current) {
+                current.classList.add("hovered");
+                current = current.previousElementSibling;
+            }
+        });
+
+        star.addEventListener("mouseout", () => {
+            // Remove destaque ao sair do mouse
+            stars.forEach(s => s.classList.remove("hovered"));
+        });
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+body {
+/*    background: linear-gradient(to right, #ed4622 50%, #121e52 50%);
+    transition: all 0.3s ease; 
+    */
+    background-color: #fff;
+    font-family: Arial, sans-serif;
+}
+header {
+    background-color: #002855;
+    text-align: center;
+    padding: 20px;
+    color: #fff;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+}
+main {
+    margin: 40px;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+footer {
+    background-color: #002855;
+    text-align: center;
+    padding: 20px;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    color: #fff;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+}

@@ -1,0 +1,13 @@
+<h2>Detalhes da Corrida</h2>
+<p><strong>Cliente:</strong> {{ pedido.cliente }}</p>
+<p><strong>Endereço de Entrega:</strong> {{ pedido.endereco_entrega }}</p>
+<p><strong>Status:</strong> {{ pedido.get_status_display }}</p>
+
+<form method="POST">
+    {% csrf_token %}
+    {% if pedido.status == 'ACE' %}
+        <button type="submit" name="acao" value="receber">Receber Encomenda</button>
+    {% elif pedido.status == 'SAI' %}
+        <button type="submit" name="acao" value="concluir">Concluir Entrega</button>
+    {% endif %}
+</form>

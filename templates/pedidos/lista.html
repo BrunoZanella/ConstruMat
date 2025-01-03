@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}ConstruMat - Meus Pedidos{% endblock %}
+
+{% block content %}
+ 
+<style>
+
+    /* Cores para os status */
+    .badge.pendente {
+        background-color: orange;
+        animation: pulsar 1.5s infinite;
+    }
+    
+    .badge.aceito,
+    .badge.preparacao,
+    .badge.saiu {
+        background-color: green;
+        color: white;
+    }
+    
+    .badge.entregue {
+        background-color: blue;
+        color: white;
+    }
+    
+    .badge.cancelado {
+        background-color: red;
+        color: white;
+    }
+    
+    /* Animação de pulsar */
+    @keyframes pulsar {
+        0% {
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(255, 165, 0, 1);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+    }
+    
+</style>
+
+<h1 class="mb-4">
+    {% if user.motorista %}
+        Minhas Corridas
+    {% else %}
+        Meus Pedidos
+    {% endif %}
+</h1>
+
+{% for pedido in pedidos %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            {% if user.motorista %}
+            Corrida #
+        {% else %}
+        Pedido #
+        {% endif %}
+            {{ pedido.id }}</h5>
+        {% comment %} <span class="badge text-dark border border-dark-{{ pedido.get_status_class }}">{{ pedido.get_status_display }}</span> {% endcomment %}
+        <span class="badge {{ pedido.get_status_class }}">
+            {{ pedido.get_status_display }}
+        </span> 
+    </div>
+    <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">{{ pedido.empresa.nome_fantasia }}</h6>
+        <p class="card-text">Data: {{ pedido.data_pedido|date:"d/m/Y H:i" }}</p>
+        
+        <h6>Itens:</h6>
+        <ul class="list-unstyled">
+            {% for item in pedido.itempedido_set.all %}
+            <li>{{ item.quantidade }}x {{ item.produto.nome }} - R$ {{ item.preco_unitario }}</li>
+            {% endfor %}
+        </ul>
+        
+        <div class="d-flex gap-2">
+            {% if pedido.status == 'ENT' and not pedido.avaliacao %}
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#avaliacaoModal{{ pedido.id }}">
+                Avaliar Pedido
+            </button>
+            {% endif %}
+            
+            <a href="{% url 'chat_pedido' pedido.id %}" class="btn btn-outline-primary">
+                <i class="fas fa-comments"></i> Chat
+            </a>
+            
+            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#ajudaModal{{ pedido.id }}">
+                <i class="fas fa-question-circle"></i> Ajuda
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Avaliação -->
+<div class="modal fade" id="avaliacaoModal{{ pedido.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'avaliar_pedido' pedido.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Avaliar Pedido #{{ pedido.id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nota</label>
+                        <div class="rating">
+                            {% for i in "12345" %}
+                            <input type="radio" name="nota" value="{{ i }}" id="star{{ i }}{{ pedido.id }}">
+                            <label for="star{{ i }}{{ pedido.id }}"><i class="fas fa-star"></i></label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comentário</label>
+                        <textarea name="comentario" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Avaliação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Ajuda -->
+<div class="modal fade" id="ajudaModal{{ pedido.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajuda com o Pedido #{{ pedido.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Contatos:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-store"></i> {{ pedido.empresa.nome_fantasia }}: {{ pedido.empresa.usuario.telefone }}</li>
+                    {% if pedido.motorista %}
+                    <li><i class="fas fa-truck"></i> Motorista: {{ pedido.motorista.usuario.telefone }}</li>
+                    {% endif %}
+                    <li><i class="fas fa-headset"></i> Suporte: (XX) XXXX-XXXX</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<p class="text-center">Você ainda não tem pedidos.</p>
+{% endfor %}
+{% endblock %}

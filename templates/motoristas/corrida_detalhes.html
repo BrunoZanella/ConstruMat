@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Corrida Atual{% endblock %}
+
+{% block content %}
+<h2>Detalhes da Corrida</h2>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Pedido #{{ corrida.id }}</h5>
+        <span class="badge bg-primary">R$ {{ corrida.valor_frete }}</span>
+    </div>
+    <div class="card-body">
+        <h6>Detalhes da Coleta</h6>
+        <p>
+            <i class="fas fa-store"></i> <strong>{{ corrida.empresa.nome_fantasia }}</strong><br>
+            <i class="fas fa-map-marker-alt"></i> {{ corrida.empresa.endereco }}
+        </p>
+
+        <h6>Detalhes da Entrega</h6>
+        <p>
+            <i class="fas fa-user"></i> {{ corrida.cliente.get_full_name }}<br>
+            <i class="fas fa-map-marker-alt"></i> {{ corrida.endereco_entrega }}
+        </p>
+
+        <h6>Itens do Pedido</h6>
+        <ul class="list-unstyled">
+            {% for item in corrida.itempedido_set.all %}
+            <li>{{ item.quantidade }}x {{ item.produto.nome }}</li>
+            {% endfor %}
+        </ul>
+
+        <h6>Status Atual</h6>
+        <p><strong>{{ corrida.get_status_display }}</strong></p>
+
+        <div class="acoes">
+            {% if corrida.status == 'ACE' %}
+                <button class="btn btn-success w-100" onclick="atualizarStatus('PRE')">
+                    <i class="fas fa-play"></i> Em Preparação
+                </button>
+            {% elif corrida.status == 'PRE' %}
+                <button class="btn btn-primary w-100" onclick="atualizarStatus('SAI')">
+                    <i class="fas fa-truck"></i> Saiu para Entrega
+                </button>
+            {% elif corrida.status == 'SAI' %}
+                <button class="btn btn-primary w-100" onclick="atualizarStatus('ENT')">
+                    <i class="fas fa-check"></i> Concluir Corrida
+                </button>
+            {% endif %}
+            <button class="btn btn-danger w-100 mt-2" onclick="atualizarStatus('CAN')">
+                <i class="fas fa-times"></i> Cancelar Corrida
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function atualizarStatus(novoStatus) {
+        const pedidoId = "{{ corrida.id }}";
+        fetch(`/atualizar-status-corrida/${pedidoId}/${novoStatus}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        console.log(`/atualizar-status-corrida/${pedidoId}/${novoStatus}/`);
+
+        
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Status atualizado com sucesso!');
+                location.reload();
+            } else {
+                alert('Erro ao atualizar status: ' + data.error);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+</script>
+{% endblock %}

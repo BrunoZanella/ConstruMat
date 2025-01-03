@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Pedido - {{ empresa.nome_fantasia }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Novo Pedido - {{ empresa.nome_fantasia }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h5 class="mb-3">Itens do Pedido</h5>
+                    <div class="table-responsive mb-3">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Preço</th>
+                                    <th>Quantidade</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if produto %}
+                                <tr>
+                                    <td>{{ produto.nome }}</td>
+                                    <td>R$ {{ produto.preco }}</td>
+                                    <td>
+                                        <input type="number" name="quantidade_{{ produto.id }}" 
+                                               value="1" min="1" 
+                                               max="{{ produto.quantidade }}"
+                                               class="form-control" style="width: 100px"
+                                               onchange="atualizarSubtotal(this, {{ produto.preco }}, {{ produto.id }})">
+                                    </td>
+                                    <td id="subtotal_{{ produto.id }}">
+                                        R$ {{ produto.preco }}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Nenhum produto selecionado.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                    <td id="total">
+                                        R$ {% if produto %}{{ produto.preco|floatformat:2 }}{% else %}0.00{% endif %}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Endereço de Entrega</label>
+                        {{ form.endereco_entrega }}
+                        {% if form.endereco_entrega.errors %}
+                        <div class="alert alert-danger mt-1">
+                            {{ form.endereco_entrega.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Observações</label>
+                        {{ form.observacao }}
+                        {% if form.observacao.errors %}
+                        <div class="alert alert-danger mt-1">
+                            {{ form.observacao.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'empresa_detalhes' empresa.id %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Confirmar Pedido</button>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function atualizarSubtotal(input, preco, produtoId) {
+    const quantidade = parseInt(input.value);
+    const subtotal = quantidade * preco;
+    document.getElementById(`subtotal_${produtoId}`).textContent = `R$ ${subtotal.toFixed(2)}`;
+    
+    // Atualiza o total
+    let total = 0;
+    document.querySelectorAll('input[name^="quantidade_"]').forEach(input => {
+        const id = input.name.split('_')[1];
+        const preco = parseFloat(input.closest('tr').querySelector('td:nth-child(2)').textContent.replace('R$ ', ''));
+        total += parseInt(input.value) * preco;
+    });
+    document.getElementById('total').textContent = `R$ ${total.toFixed(2)}`;
+}
+</script>
+{% endblock %}

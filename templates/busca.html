@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}ConstruMat - Busca{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <form method="get" class="d-flex">
+            <input type="search" name="q" class="form-control me-2" placeholder="Buscar produtos ou lojas..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h4>Categorias</h4>
+        <div class="d-flex flex-wrap gap-2">
+            {% for tipo in tipos_empresa %}
+            <a href="?tipo={{ tipo.id }}" class="btn btn-outline-primary">
+                {% if tipo.icone %}
+                <img src="{{ tipo.icone.url }}" alt="{{ tipo.nome }}" width="24" height="24">
+                {% endif %}
+                {{ tipo.nome }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if resultados %}
+    {% for item in resultados %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        {% if item.tipo == 'empresa' %}
+        <!-- Card de Empresa -->
+        <div class="card h-100">
+            {% if item.foto %}
+            <img src="{{ item.foto.url }}" class="card-img-top" alt="{{ item.nome_fantasia }}">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ item.nome_fantasia }}</h5>
+                <p class="card-text">{{ item.tipo.nome }}</p>
+                <a href="{% url 'empresa_detalhes' item.id %}" class="btn btn-primary">Ver Detalhes</a>
+            </div>
+        </div>
+        {% else %}
+        <!-- Card de Produto -->
+        <div class="card h-100">
+            {% if item.foto %}
+            <img src="{{ item.foto.url }}" class="card-img-top" alt="{{ item.nome }}">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ item.nome }}</h5>
+                <p class="card-text">R$ {{ item.preco }}</p>
+                <p class="card-text"><small class="text-muted">{{ item.empresa.nome_fantasia }}</small></p>
+                <a href="{% url 'produto_detalhes' item.id %}" class="btn btn-primary">Ver Produto</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <p class="text-center">Nenhum resultado encontrado.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
