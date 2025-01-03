@@ -47,7 +47,7 @@ MIDDLEWARE = [
 ]
 
 STATICSTORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# CSRF_TRUSTED_ORIGINS= ["https://loteria.up.railway.app"]
+CSRF_TRUSTED_ORIGINS= ["https://construmat.up.railway.app"]
 
 ROOT_URLCONF = 'construmat.urls'
 
