@@ -10,7 +10,9 @@ urlpatterns = [
     path('perfil/', views.perfil, name='perfil'),
     path('motorista/cadastro/', views.cadastro_motorista, name='cadastro_motorista'),
     path('motorista/editar/', views.editar_motorista, name='editar_motorista'),
-    
+
+    path('alterar_tipo_usuario/', views.alterar_tipo_usuario, name='alterar_tipo_usuario'),
+
     # URLs para redefinição de senha
     path('password_reset/', auth_views.PasswordResetView.as_view(
         template_name='usuarios/password_reset_form.html',

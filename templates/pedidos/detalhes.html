@@ -4,51 +4,11 @@
 
 {% block content %}
 
-<style>
-
-    /* Cores para os status */
-    .badge.pendente {
-        background-color: orange;
-        animation: pulsar 1.5s infinite;
-    }
-    
-    .badge.aceito,
-    .badge.preparacao,
-    .badge.saiu {
-        background-color: green;
-        color: white;
-    }
-    
-    .badge.entregue {
-        background-color: blue;
-        color: white;
-    }
-    
-    .badge.cancelado {
-        background-color: red;
-        color: white;
-    }
-    
-    /* Animação de pulsar */
-    @keyframes pulsar {
-        0% {
-            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
-        }
-        50% {
-            box-shadow: 0 0 20px rgba(255, 165, 0, 1);
-        }
-        100% {
-            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
-        }
-    }
-    
-</style>
 
 <div class="card mb-4">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
             <h4 class="mb-0">Pedido #{{ pedido.id }}</h4>
-            {% comment %} <span class="badge text-dark border border-dark-{{ pedido.get_status_class }}">{{ pedido.get_status_display }}</span> {% endcomment %}
             <span class="badge {{ pedido.get_status_class }}">
                 {{ pedido.get_status_display }}
             </span>  
@@ -109,19 +69,62 @@
         </div>
 
         <div class="mt-4">
-            <a href="{% url 'chat_pedido' pedido.id %}" class="btn btn-primary">
-                <i class="fas fa-comments"></i> Chat
-            </a>
-            {% if pedido.status == 'ENT' and not pedido.avaliacao %}
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#avaliacaoModal">
-                <i class="fas fa-star"></i> Avaliar Pedido
-            </button>
-            {% endif %}
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="{% url 'chat_pedido' pedido.id %}" class="btn btn-primary">
+                        <i class="fas fa-comments"></i> Chat
+                    </a>
+        
+                    {% if user == pedido.cliente %}
+                        {% if pedido.pode_cancelar %}
+                        <form method="post" action="{% url 'cancelar_pedido' pedido.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger" 
+                                    onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">
+                                <i class="fas fa-times"></i> Cancelar Pedido
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+        
+                    {% if user == pedido.motorista.usuario %}
+                        {% if pedido.pode_retirar %}
+                        <form method="post" action="{% url 'retirar_pedido' pedido.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-box"></i> Receber Encomenda
+                            </button>
+                        </form>
+                        {% endif %}
+        
+                        {% if pedido.pode_entregar %}
+                        <form method="post" action="{% url 'entregar_pedido' pedido.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Concluir Entrega
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+        
+                    {% if pedido.status == 'ENT' and user == pedido.cliente and not pedido.avaliacao %}
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#avaliacaoModal">
+                        <i class="fas fa-star"></i> Avaliar Pedido
+                    </button>
+                    {% endif %}
+                </div>
+        
+                <div>
+                    <a href="{% url 'recibo_pedido' pedido.id %}" class="btn btn-secondary">
+                        <i class="fas fa-receipt"></i> Visualizar Recibo
+                    </a>
+                </div>
+            </div>
         </div>
-    </div>
+        
 </div>
 
-{% if pedido.status == 'ENT' and not pedido.avaliacao %}
+{% if pedido.status == 'ENT' and user == pedido.cliente and not pedido.avaliacao %}
 <!-- Modal de Avaliação -->
 <div class="modal fade" id="avaliacaoModal" tabindex="-1">
     <div class="modal-dialog">
@@ -157,67 +160,68 @@
 </div>
 {% endif %}
 
+
 <style>
-.rating {
-    display: flex;
-    gap: 5px;
-    justify-content: center;
-    align-items: center;
-}
-
-.star {
-    font-size: 2rem;
-    color: #ccc; /* Cor padrão da estrela */
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.star.selected,
-.star:hover,
-.star:hover ~ .star {
-    color: #f0d64f; /* Cor dourada */
-}
-</style>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const stars = document.querySelectorAll(".rating .star");
-    const ratingInput = document.getElementById("ratingInput");
-
-    stars.forEach((star) => {
-        star.addEventListener("click", () => {
-            // Remove seleção anterior
-            stars.forEach(s => s.classList.remove("selected"));
-
-            // Adiciona seleção até a estrela clicada
-            star.classList.add("selected");
-            let current = star.previousElementSibling;
-            while (current) {
-                current.classList.add("selected");
-                current = current.previousElementSibling;
-            }
-
-            // Atualiza o valor do input escondido
-            ratingInput.value = star.dataset.value;
-        });
-
-        star.addEventListener("mouseover", () => {
-            // Destaca estrelas ao passar o mouse
-            stars.forEach(s => s.classList.remove("hovered"));
-            star.classList.add("hovered");
-            let current = star.previousElementSibling;
-            while (current) {
-                current.classList.add("hovered");
-                current = current.previousElementSibling;
-            }
-        });
-
-        star.addEventListener("mouseout", () => {
-            // Remove destaque ao sair do mouse
-            stars.forEach(s => s.classList.remove("hovered"));
+    .rating {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .star {
+        font-size: 2rem;
+        color: #ccc; /* Cor padrão da estrela */
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+    
+    .star.selected,
+    .star:hover,
+    .star:hover ~ .star {
+        color: #f0d64f; /* Cor dourada */
+    }
+    </style>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const stars = document.querySelectorAll(".rating .star");
+        const ratingInput = document.getElementById("ratingInput");
+    
+        stars.forEach((star) => {
+            star.addEventListener("click", () => {
+                // Remove seleção anterior
+                stars.forEach(s => s.classList.remove("selected"));
+    
+                // Adiciona seleção até a estrela clicada
+                star.classList.add("selected");
+                let current = star.previousElementSibling;
+                while (current) {
+                    current.classList.add("selected");
+                    current = current.previousElementSibling;
+                }
+    
+                // Atualiza o valor do input escondido
+                ratingInput.value = star.dataset.value;
+            });
+    
+            star.addEventListener("mouseover", () => {
+                // Destaca estrelas ao passar o mouse
+                stars.forEach(s => s.classList.remove("hovered"));
+                star.classList.add("hovered");
+                let current = star.previousElementSibling;
+                while (current) {
+                    current.classList.add("hovered");
+                    current = current.previousElementSibling;
+                }
+            });
+    
+            star.addEventListener("mouseout", () => {
+                // Remove destaque ao sair do mouse
+                stars.forEach(s => s.classList.remove("hovered"));
+            });
         });
     });
-});
-</script>
-
+    </script>
+    
 {% endblock %}

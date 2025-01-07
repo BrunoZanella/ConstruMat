@@ -31,3 +31,13 @@ class MotoristaForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
+
+
+class AlterarTipoUsuarioForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        fields = ['tipo']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tipo'].widget.attrs['class'] = 'form-control'

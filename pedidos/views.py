@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 from django.contrib import messages
 from .models import Pedido, ItemPedido, Avaliacao
 from .forms import PedidoForm, AvaliacaoForm, ItemPedidoForm
@@ -9,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 from django.http import JsonResponse
+from django.core.exceptions import PermissionDenied
 
 '''
 @login_required
@@ -73,18 +75,27 @@ def novo_pedido(request, empresa_id):
 @login_required
 def detalhes_pedido(request, pedido_id):
     try:
+        # Tenta buscar o pedido pelo ID
         pedido = Pedido.objects.get(id=pedido_id)
-        
-        # Verificar se o usuário é o cliente ou está associado à empresa
-        if pedido.cliente == request.user or pedido.empresa.usuario == request.user:
-            return render(request, 'pedidos/detalhes.html', {'pedido': pedido})
-        else:
+
+        # Verifica se o usuário logado está relacionado ao pedido
+        if not (
+            pedido.cliente == request.user or  # Cliente é o usuário logado
+            (pedido.motorista and pedido.motorista.usuario == request.user) or  # Motorista é o usuário logado
+            pedido.empresa.usuario == request.user  # Empresa é o usuário logado
+        ):
+            # Exibe mensagem e redireciona para a página de pedidos
             messages.error(request, "Você não tem permissão para acessar este pedido.")
             return redirect('pedidos')
-    
+
+        # Renderiza a página de detalhes do pedido
+        return render(request, 'pedidos/detalhes.html', {'pedido': pedido})
+
     except Pedido.DoesNotExist:
+        # Pedido não encontrado
         messages.error(request, "Pedido não encontrado.")
         return redirect('pedidos')
+
 
 
 @login_required
@@ -117,44 +128,6 @@ def pedidos_motorista(request):
 
 
 
-
-'''
-@login_required
-def aceitar_pedido(request, pedido_id):
-    if not hasattr(request.user, 'motorista'):
-        messages.error(request, 'Você precisa ser um motorista cadastrado.')
-        return redirect('home')
-    
-    pedido = get_object_or_404(Pedido, id=pedido_id, status='PEN', motorista__isnull=True)
-    pedido.motorista = request.user.motorista
-    pedido.status = 'ACE'
-    pedido.save()
-    
-    messages.success(request, 'Pedido aceito com sucesso!')
-    return redirect('pedidos_motorista')
-
-'''
-
-
-def aceitar_pedido(request, pedido_id):
-    if request.user.is_authenticated and hasattr(request.user, 'motorista'):
-        motorista = request.user.motorista
-
-        # Verificar se o motorista já está em uma corrida
-        if Pedido.objects.filter(motorista=motorista, status__in=['ACE', 'PRE', 'SAI']).exists():
-            messages.error(request, "Você já está em uma corrida. Conclua-a antes de aceitar outra.")
-            return HttpResponseRedirect(reverse('home'))
-
-        # Associar motorista ao pedido e alterar status
-        pedido = get_object_or_404(Pedido, id=pedido_id, status='PEN', motorista__isnull=True)
-        pedido.motorista = motorista
-        pedido.status = 'ACE'
-        pedido.save()
-
-        messages.success(request, f"Corrida aceita! Você está agora na corrida do pedido #{pedido.id}.")
-        return HttpResponseRedirect(reverse('home'))
-    return HttpResponseRedirect(reverse('login'))
-
 @login_required
 def concluir_pedido(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id, motorista__usuario=request.user)
@@ -183,6 +156,30 @@ def concluir_pedido(request, pedido_id):
 
 
 
+@login_required
+def recibo_pedido(request, pedido_id):
+    # Recupera o pedido, mas sem restrições iniciais de relacionamento com usuário
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    
+    # Verifica se o usuário é autorizado a visualizar o pedido
+    if not (
+        request.user == pedido.cliente or 
+        request.user == pedido.empresa.usuario or 
+        (hasattr(request.user, 'motorista') and pedido.motorista and request.user.motorista == pedido.motorista)
+    ):
+        return HttpResponseForbidden("Você não tem permissão para visualizar este recibo.")
+    
+    # Dados do recibo
+    recibo = {
+        'pedido': pedido,
+        'data_entrega': pedido.data_entrega or "Ainda não entregue",
+        'itens': pedido.itempedido_set.all(),
+        'total': pedido.total,
+        'frete': pedido.valor_frete,
+        'total_com_frete': pedido.total + pedido.valor_frete,
+    }
+    return render(request, 'pedidos/recibo.html', {'recibo': recibo,
+                                                   })
 
 
 
@@ -208,3 +205,67 @@ def atualizar_status_corrida(request, pedido_id, novo_status):
     # Caso a transição não seja válida
     return JsonResponse({'success': False, 'error': 'Transição de status inválida.'}, status=400)
 
+
+@login_required
+def cancelar_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
+    
+    if pedido.cancelar():
+        messages.success(request, 'Pedido cancelado com sucesso!')
+    else:
+        messages.error(request, 'Não foi possível cancelar o pedido.')
+    
+    return redirect('pedidos')
+
+@login_required
+def aceitar_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    motorista = request.user.motorista
+    
+    if pedido.aceitar(motorista):
+        messages.success(request, 'Pedido aceito com sucesso!')
+    else:
+        messages.error(request, 'Não foi possível aceitar o pedido.')
+    
+    return redirect('detalhes_pedido', pedido_id=pedido.id)
+
+@login_required
+def retirar_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id, motorista__usuario=request.user)
+    
+    if pedido.retirar():
+        messages.success(request, 'Pedido retirado com sucesso!')
+    else:
+        messages.error(request, 'Não foi possível atualizar o status do pedido.')
+    
+    return redirect('detalhes_pedido', pedido_id=pedido.id)
+
+@login_required
+def entregar_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id, motorista__usuario=request.user)
+    
+    if pedido.entregar():
+        messages.success(request, 'Pedido entregue com sucesso!')
+        return redirect('recibo_pedido', pedido_id=pedido.id)
+    else:
+        messages.error(request, 'Não foi possível concluir a entrega.')
+        return redirect('detalhes_pedido', pedido_id=pedido.id)
+
+
+
+'''
+@login_required
+def aceitar_pedido(request, pedido_id):
+    if not hasattr(request.user, 'motorista'):
+        messages.error(request, 'Você precisa ser um motorista cadastrado.')
+        return redirect('home')
+    
+    pedido = get_object_or_404(Pedido, id=pedido_id, status='PEN', motorista__isnull=True)
+    pedido.motorista = request.user.motorista
+    pedido.status = 'ACE'
+    pedido.save()
+    
+    messages.success(request, 'Pedido aceito com sucesso!')
+    return redirect('pedidos_motorista')
+
+'''

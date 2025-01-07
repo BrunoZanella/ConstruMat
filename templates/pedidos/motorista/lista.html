@@ -12,7 +12,10 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Pedido #{{ pedido.id }}</h5>
-                    <span class="badge bg-{{ pedido.get_status_class }}">{{ pedido.get_status_display }}</span>
+                    {% comment %} <span class="badge bg-{{ pedido.get_status_class }}">{{ pedido.get_status_display }}</span> {% endcomment %}
+                    <span class="badge {{ pedido.get_status_class }}">
+                        {{ pedido.get_status_display }}
+                    </span> 
                 </div>
             </div>
             <div class="card-body">

@@ -54,6 +54,53 @@
             color: var(--primary-color);
         }
     </style>
+
+    
+
+    <style>
+
+        /* Cores para os status */
+        .badge.pendente {
+            background-color: orange;
+            animation: pulsar 1.5s infinite;
+        }
+        
+        .badge.aceito,
+        .badge.preparacao,
+        .badge.saiu {
+            background-color: green;
+            color: white;
+        }
+        
+        .badge.entregue {
+            background-color: blue;
+            color: white;
+        }
+        .badge.retirado {
+            background-color: green;
+            color: white;
+        }
+        .badge.cancelado {
+            background-color: red;
+            color: white;
+        }
+        
+        /* Animação de pulsar */
+        @keyframes pulsar {
+            0% {
+                box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(255, 165, 0, 1);
+            }
+            100% {
+                box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+            }
+        }
+        
+    </style>
+
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>

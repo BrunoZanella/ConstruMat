@@ -1,70 +1,62 @@
 {% extends 'base.html' %}
 
-{% block title %}ConstruMat - Chat do Pedido #{{ pedido.id }}{% endblock %}
+{% block title %}Chat - Pedido #{{ pedido.id }}{% endblock %}
 
 {% block content %}
 
-<style>
-
-    /* Cores para os status */
-    .badge.pendente {
-        background-color: orange;
-        animation: pulsar 1.5s infinite;
-    }
-    
-    .badge.aceito,
-    .badge.preparacao,
-    .badge.saiu {
-        background-color: green;
-        color: white;
-    }
-    
-    .badge.entregue {
-        background-color: blue;
-        color: white;
-    }
-    
-    .badge.cancelado {
-        background-color: red;
-        color: white;
-    }
-    
-    /* Animação de pulsar */
-    @keyframes pulsar {
-        0% {
-            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
-        }
-        50% {
-            box-shadow: 0 0 20px rgba(255, 165, 0, 1);
-        }
-        100% {
-            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
-        }
-    }
-    
-</style>
-
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">
-            {% if user.motorista %}
-            Chat da Corrida #
-        {% else %}
-            Chat do Pedido #
-        {% endif %}
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                Chat - Pedido #{{ pedido.id }}
+                {% comment %} <span class="badge bg-{{ pedido.get_status_class }}">{{ pedido.get_status_display }}</span> {% endcomment %}
+                <span class="badge {{ pedido.get_status_class }}">
+                    {{ pedido.get_status_display }}
+                </span> 
+            </h4>
+            <div class="btn-group">
+                {% if request.user == pedido.cliente %}
+                <a href="{% url 'chat_pedido' pedido.id %}?tipo=CLI_EMP"
+                   class="btn btn-outline-primary {% if tipo_atual == 'CLI_EMP' %}active{% endif %}">
+                    Empresa
+                </a>
+                {% if pedido.motorista %}
+                <a href="{% url 'chat_pedido' pedido.id %}?tipo=CLI_MOT"
+                   class="btn btn-outline-primary {% if tipo_atual == 'CLI_MOT' %}active{% endif %}">
+                    Motorista
+                </a>
+                {% endif %}
+            {% elif request.user == pedido.empresa.usuario %}
+                <a href="{% url 'chat_pedido' pedido.id %}?tipo=CLI_EMP"
+                   class="btn btn-outline-primary {% if tipo_atual == 'CLI_EMP' %}active{% endif %}">
+                    Cliente
+                </a>
+                {% if pedido.motorista %}
+                <a href="{% url 'chat_pedido' pedido.id %}?tipo=MOT_EMP"
+                   class="btn btn-outline-primary {% if tipo_atual == 'MOT_EMP' %}active{% endif %}">
+                    Motorista
+                </a>
+                {% endif %}
+            {% elif request.user == pedido.motorista.usuario %}
+                <a href="{% url 'chat_pedido' pedido.id %}?tipo=CLI_MOT"
+                   class="btn btn-outline-primary {% if tipo_atual == 'CLI_MOT' %}active{% endif %}">
+                    Cliente
+                </a>
+                <a href="{% url 'chat_pedido' pedido.id %}?tipo=MOT_EMP"
+                   class="btn btn-outline-primary {% if tipo_atual == 'MOT_EMP' %}active{% endif %}">
+                    Empresa
+                </a>
+            {% endif %}
+            </div>
             
-            {{ pedido.id }} - {{ pedido.empresa.nome_fantasia }}
-            {% comment %} <span class="badge text-dark border border-dark-{{ pedido.get_status_class }} float-end">{{ pedido.get_status_display }}</span> {% endcomment %}
-            <span class="badge {{ pedido.get_status_class }} float-end">
-                {{ pedido.get_status_display }}
-            </span> 
-        </h5>
+        </div>
     </div>
     <div class="card-body">
         <div class="chat-messages" id="chatMessages" style="height: 400px; overflow-y: auto;">
             {% for mensagem in mensagens %}
             <div class="message {% if mensagem.remetente == request.user %}message-own{% endif %} mb-2">
-                <div class="message-content p-2 rounded {% if mensagem.remetente == request.user %}bg-primary text-white float-end{% else %}bg-light float-start{% endif %}">
+                <div class="message-content p-2 rounded {% if mensagem.remetente == request.user %}bg-primary text-white float-end{% else %}bg-light float-start{% endif %}"
+                     data-message-id="{{ mensagem.id }}">
                     <small class="d-block text-muted">{{ mensagem.remetente.get_full_name|default:mensagem.remetente.username }}</small>
                     {{ mensagem.conteudo }}
                     <small class="d-block text-muted">{{ mensagem.enviada_em|date:"H:i" }}</small>
@@ -73,8 +65,8 @@
             </div>
             {% endfor %}
         </div>
-        
-        <form method="post" class="mt-3">
+
+        <form method="post" class="mt-3" id="messageForm">
             {% csrf_token %}
             <div class="input-group">
                 <input type="text" name="mensagem" class="form-control" placeholder="Digite sua mensagem..." required>
@@ -87,20 +79,63 @@
 
 {% block extra_js %}
 <script>
-    // Rolar chat para última mensagem
     const chatMessages = document.getElementById('chatMessages');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    const messageForm = document.getElementById('messageForm');
+    let lastMessageId = '{{ mensagens.last.id|default:0 }}';
+    let conversaId = '{{ conversa.id }}';  // Garanta que o ID da conversa é passado no template
+    let tipo = '{{ tipo_atual|default:"CLI_EMP" }}';  // Passando o tipo, se estiver disponível
     
-    // Atualizar chat periodicamente
-    setInterval(() => {
-        fetch(window.location.href)
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newMessages = doc.getElementById('chatMessages').innerHTML;
-                chatMessages.innerHTML = newMessages;
+    // Rola chat para última mensagem
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    scrollToBottom();
+    
+    // Atualiza chat periodicamente
+    function updateChat() {
+        fetch(`/chat/atualizar/${conversaId}/?ultima_msg=${lastMessageId}&tipo=${tipo}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.mensagens && data.mensagens.length > 0) {
+                    data.mensagens.forEach(msg => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = `message ${msg.is_own ? 'message-own' : ''} mb-2`;
+                        messageDiv.innerHTML = `
+                            <div class="message-content p-2 rounded ${msg.is_own ? 'bg-primary text-white float-end' : 'bg-light float-start'}"
+                                 data-message-id="${msg.id}">
+                                <small class="d-block text-muted">${msg.remetente}</small>
+                                ${msg.conteudo}
+                                <small class="d-block text-muted">${msg.enviada_em}</small>
+                            </div>
+                            <div class="clearfix"></div>
+                        `;
+                        chatMessages.appendChild(messageDiv);
+                        lastMessageId = msg.id;
+                    });
+                    scrollToBottom();
+                }
             });
-    }, 5000);
+    }
+    
+    setInterval(updateChat, 5000);
+    
+
+// Envia mensagem sem recarregar a página
+messageForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    }).then(() => {
+        messageForm.reset();
+        updateChat();
+    });
+});
 </script>
 {% endblock %}

@@ -60,7 +60,12 @@ class Motorista(models.Model):
     tipo_veiculo = models.CharField('Tipo de Veículo', max_length=3, choices=TIPO_VEICULO)
     placa = models.CharField(max_length=7)
     disponivel = models.BooleanField('Disponível', default=True)
-    
+
+    def tem_pedido_em_andamento(self):
+        return self.pedido_set.filter(
+            status__in=['ACE', 'RET', 'SAI']
+        ).exists()
+        
     class Meta:
         verbose_name = 'Motorista'
         verbose_name_plural = 'Motoristas'

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Minhas Conversas - ConstruMat{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">Minhas Conversas</h4>
+    </div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for conversa in conversas %}
+            <a href="{% url 'chat_pedido' conversa.pedido.id %}{% if conversa.tipo != 'CLI_EMP' %}?tipo={{ conversa.tipo }}{% endif %}" 
+               class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">
+                            Pedido #{{ conversa.pedido.id }} - 
+                            {% if conversa.tipo == 'CLI_EMP' %}
+                                {{ conversa.pedido.empresa.nome_fantasia }}
+                            {% elif conversa.tipo == 'CLI_MOT' %}
+                                Motorista: {{ conversa.pedido.motorista.usuario.get_full_name }}
+                            {% else %}
+                                Empresa: {{ conversa.pedido.empresa.nome_fantasia }}
+                            {% endif %}
+                        </h6>
+                        {% if conversa.ultima_mensagem %}
+                        <small class="text-muted">
+                            Última mensagem: {{ conversa.ultima_mensagem.enviada_em|date:"d/m/Y H:i" }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% with nao_lidas=conversa.total_nao_lidas %}
+                    {% if nao_lidas %}
+                    <span class="badge bg-primary rounded-pill">{{ nao_lidas }}</span>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                {% if conversa.ultima_mensagem %}
+                <p class="mb-1 text-truncate">{{ conversa.ultima_mensagem.conteudo }}</p>
+                {% else %}
+                <p class="mb-1 text-muted">Nenhuma mensagem ainda</p>
+                {% endif %}
+            </a>
+            {% empty %}
+            <div class="text-center p-4">
+                <p class="mb-0 text-muted">Nenhuma conversa encontrada.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
